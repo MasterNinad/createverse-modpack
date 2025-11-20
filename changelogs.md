@@ -1,4 +1,4 @@
-# V4.0.0.1 (Hotfix)
+# V4.1.0.1 (Hotfix)
 ## Removed:
 - Petrolpark's Library
 - Petrol's Parts
@@ -15,8 +15,8 @@ All these changes were made due to Create 6.0.8
 
 ## Additional Changes:
 - Quests
-- Updated Create to 6.0.8 (Some incompaitable addons were updated just as I released 4.0.0 modpack)
-- Permenantly disabled Flywheel, so you don't have to enter that flywheel off command every time
+- Updated Create to 6.0.8 (Some incompatible addons were updated just as I released 4the .0.0 modpack)
+- Permanently disabled Flywheel, so you don't have to enter that flywheel off command every time
 
 # V4.0.0
 ## This is a complete rewrite of the modpack
