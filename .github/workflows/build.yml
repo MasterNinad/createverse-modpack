@@ -79,17 +79,22 @@ jobs:
         if: steps.check_release.outputs.exists == 'true'
         run: |
           TAG="v${{ steps.version.outputs.version }}"
-          BODY="${{ steps.changelog.outputs.body }}"
 
           RELEASE_INFO=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG)
           RELEASE_ID=$(echo "$RELEASE_INFO" | jq -r '.id')
 
           echo "Updating release ID: $RELEASE_ID"
 
+          # Write changelog to a file
+          echo "${{ steps.changelog.outputs.body }}" > changelog.txt
+
+          # Convert markdown -> JSON-safe string
+          JSON_BODY=$(jq -Rs '{body: .}' changelog.txt)
+
           curl -X PATCH \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"body\":\"$BODY\"}" \
+            --data "$JSON_BODY" \
             https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
 
       - name: Create New Release
