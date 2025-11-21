@@ -33,8 +33,10 @@ jobs:
 
           BODY=$(awk -v ver="V$VERSION" '
             BEGIN {found=0}
-            $0 ~ "^# " ver"$" {found=1; next}
-            found && /^#/ && !($0 ~ "^# " ver"$") {found=0}
+            # START when header begins with "# V<version>"
+            $0 ~ "^# " ver {found=1; next}
+            # STOP when we reach the next "# V<number>"
+            found && /^# V[0-9]/ {found=0}
             found {print}
           ' changelogs.md)
 
