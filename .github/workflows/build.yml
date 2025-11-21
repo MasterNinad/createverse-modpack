@@ -1,8 +1,8 @@
-name: Build Modrinth Pack
+name: Build CreateVerse Pack
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -16,27 +16,85 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get version from modrinth.index.json
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Read version from modrinth.index.json
         id: version
         run: |
           VERSION=$(jq -r '.versionId' modrinth.index.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          BODY=$(awk -v ver="V$VERSION" '
+            BEGIN {found=0}
+            $0 ~ "^# " ver"$" {found=1; next}
+            found && /^#/ && !($0 ~ "^# " ver"$") {found=0}
+            found {print}
+          ' changelogs.md)
+
+          if [ -z "$BODY" ]; then
+            echo "⚠ No changelog found for version V$VERSION"
+          fi
+
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build .mrpack
         run: |
           mkdir -p build
-          zip -r build/modpack-${{ steps.version.outputs.version }}.mrpack modrinth.index.json overrides
+          zip -r build/createverse-${{ steps.version.outputs.version }}.mrpack overrides modrinth.index.json
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: modpack-${{ steps.version.outputs.version }}
-          path: build/modpack-${{ steps.version.outputs.version }}.mrpack
+          name: createverse-${{ steps.version.outputs.version }}
+          path: build/createverse-${{ steps.version.outputs.version }}.mrpack
 
-      - name: Create GitHub Release
+      - name: Check if release exists
+        id: check_release
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          API="https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG"
+
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" $API)
+
+          if [ "$STATUS" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release exists."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release does not exist."
+          fi
+
+      - name: Update Existing Release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          BODY="${{ steps.changelog.outputs.body }}"
+
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG)
+          RELEASE_ID=$(echo "$RELEASE_INFO" | jq -r '.id')
+
+          echo "Updating release ID: $RELEASE_ID"
+
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"body\":\"$BODY\"}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+
+      - name: Create New Release
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: "Release v${{ steps.version.outputs.version }}"
-          body: "Automatic release for version ${{ steps.version.outputs.version }}"
-          files: build/modpack-${{ steps.version.outputs.version }}.mrpack
+          name: "CreateVerse v${{ steps.version.outputs.version }}"
+          body: ${{ steps.changelog.outputs.body }}
+          files: build/createverse-${{ steps.version.outputs.version }}.mrpack
