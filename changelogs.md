@@ -1,3 +1,25 @@
+# V4.2.0
+## Added:
+- Simple Hats
+- Saturation Plus
+- Tacz Reloaded and Target dummy
+- Tool Belt
+- Astikor Cart Redux
+- Not Enough Crashes
+- Vista cctv mod
+- AE Infinity Booster
+- More Curious Slots
+- WarStuff Legacy (Classic)
+- WarStuff II - Decorations
+- ReArm:Combat Overhaul (to balance guns)
+- Prone was Pressed
+- dummmmmmmmy
+
+## Updated:
+- Create:Copycats+
+- Create:Northstar Redux
+- And all the mods that released an update after the release of the 4.1.0 modpack
+
 # V4.1.0.1 (Hotfix)
 ## Removed:
 - Petrolpark's Library
